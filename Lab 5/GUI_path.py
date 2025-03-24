@@ -1,13 +1,15 @@
 from tkinter import *
 import tkinter as tk
+from tkinter import filedialog
 from tkinter import messagebox
+import datetime
 
 #Dimensions of grid maze
 CELL_SIZE = 40 #size of each cell in pixels
 GRID_WIDTH = 6
 GRID_HEIGHT = 12
 
-class GridMaze:
+class GUI:
     def __init__(self, root):
         self.root=root
         self.root.title("Grid Maze")
@@ -32,13 +34,34 @@ class GridMaze:
         #starting position of the pointer (row, col)
         self.pointer_pos = [0, 5]
         self.direction = "down"
-        self.state = False
+        self.obstacle_detected = False
+        self.obstacle_list = []
         self.draw_maze()
         self.draw_pointer()
         self.root.bind("<Up>", self.move_forward)
         self.root.bind("<Down>", self.move_backward)
         self.root.bind("<Left>", self.turn_left)
         self.root.bind("<Right>", self.turn_right)
+
+    def obstacle_detection(self):
+        self.obstacle_detected = True
+        timestamp = datetime.datetime.now()
+        detected_object = (timestamp, self.pointer_pos, self.direction)
+        print("Object Detected: ", detected_object)
+        self.obstacle_list.append(detected_object)
+
+    def save_file(self):
+        file = filedialog.asksaveasfile(initialdir=r"C:\Users\jumbo\Desktop\ML_2025\Lab5", defaultextension='.txt',
+                                 filetypes=[("Text file",".txt"), 
+                                            ("HTML file", ".html"),
+                                            ("All files", ".*")])
+        if file is None:
+            messagebox.showwarning(title='Notice', message = 'File was not saved.')
+            return
+        for obstacle in self.obstacle_list:
+            obstacle_line = f"Obstacle detected - Timestamp: {obstacle[0]}, Position: {obstacle[1]}, Direction: {obstacle[2]}\n"
+            file.write(obstacle_line)
+        file.close()
 
     def draw_maze(self):
         for row in range(GRID_HEIGHT):
@@ -163,5 +186,9 @@ title = Label(root,
               relief = RAISED, bd=10,
               padx=10, pady=5)
 title.place(x=160, y=0)
-maze = GridMaze(root)
+maze = GUI(root)
+save_button = Button(root, text='save', command=maze.save_file, font=('Arial', 14), bg='green', fg='white')
+save_button.pack(pady=10)
+obstacle_button = Button(root, text='Obstacle', command=maze.obstacle_detection, font=('Arial', 14), bg='red', fg='white')
+obstacle_button.pack(pady=10, padx=10)
 root.mainloop()
