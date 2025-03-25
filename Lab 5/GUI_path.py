@@ -15,7 +15,7 @@ class GUI:
         self.root.title("Grid Maze")
 
         self.canvas = tk.Canvas(root, width=GRID_WIDTH*CELL_SIZE, height=GRID_HEIGHT*CELL_SIZE, bg='white')
-        self.canvas.pack(padx=10, pady=10)
+        self.canvas.pack(padx=10, pady=80)
 
         self.maze = [
             [0, 0, 0, 0, 0, 2],
@@ -33,6 +33,7 @@ class GUI:
         ]
         #starting position of the pointer (row, col)
         self.pointer_pos = [0, 5]
+        self.distance = 0.0
         self.direction = "down"
         self.obstacle_detected = False
         self.obstacle_list = []
@@ -93,8 +94,13 @@ class GUI:
         elif self.direction == "right":
             self.canvas.create_line(x, y, x + CELL_SIZE // 4, y,  width=3, arrow="last", tags="pointer")
 
+    def update_label(self):
+        self.distance = self.distance+0.5
+        display_distance.set(f"Distance Travelled: {self.distance:.2f}m")
+        root.update_idletasks()
 
     def move_forward(self, event=None):
+        timestamp = datetime.datetime.now()
         row, col = self.pointer_pos
         new_row, new_col = row, col
 
@@ -121,8 +127,11 @@ class GUI:
             self.canvas.create_line(prev_x, prev_y, new_x, new_y, width=2)
 
             self.draw_pointer()
+            print(f"{timestamp} [Event] Moved forward")
+            self.update_label()
     
     def move_backward(self, event=None):
+        timestamp = datetime.datetime.now()
         row, col = self.pointer_pos
         new_row, new_col = row, col
 
@@ -149,8 +158,11 @@ class GUI:
             self.canvas.create_line(prev_x, prev_y, new_x, new_y, width=2)
 
             self.draw_pointer()
+            print(f"{timestamp} [Event] Reversed")
+            self.update_label()
 
     def turn_right(self, event=None):
+        timestamp = datetime.datetime.now()
         current_direction = self.direction
         if current_direction == "up":
             self.direction = "right"
@@ -162,8 +174,10 @@ class GUI:
             self.direction = "down"
         
         self.draw_pointer()
+        print(f"{timestamp} [Event] Turned right")
 
     def turn_left(self, event=None):
+        timestamp = datetime.datetime.now()
         current_direction = self.direction
         if current_direction == "up":
             self.direction = "left"
@@ -175,6 +189,7 @@ class GUI:
             self.direction = "up"
         
         self.draw_pointer()
+        print(f"{timestamp} [Event] Turned left")
 
 root=tk.Tk()
 root.geometry("500x800")
@@ -185,8 +200,12 @@ title = Label(root,
               text="Robot Path", font=('Arial', 20, 'bold'), fg='white', bg='black',
               relief = RAISED, bd=10,
               padx=10, pady=5)
-title.place(x=160, y=0)
+title.place(x=160, y=10)
 maze = GUI(root)
+display_distance = tk.StringVar()
+display_distance.set(str(float(0)))
+label = Label(root, textvariable=display_distance, font=('Arial', 16), bg='#000000', fg='#FFFFFF')
+label.pack()
 save_button = Button(root, text='save', command=maze.save_file, font=('Arial', 14), bg='green', fg='white')
 save_button.pack(pady=10)
 obstacle_button = Button(root, text='Obstacle', command=maze.obstacle_detection, font=('Arial', 14), bg='red', fg='white')
