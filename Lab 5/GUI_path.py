@@ -5,12 +5,15 @@ from tkinter import messagebox
 import datetime
 
 #Dimensions of grid maze
-CELL_SIZE = 40 #size of each cell in pixels
-GRID_WIDTH = 6
-GRID_HEIGHT = 12
+CELL_SIZE = 18 #size of each cell in pixels
+GRID_WIDTH = 7
+GRID_HEIGHT = 8
+
+
 
 class GUI:
-    def __init__(self, root):
+    def __init__(self, root, display_distance):
+        self.display_distance = display_distance
         self.root=root
         self.root.title("Grid Maze")
 
@@ -18,24 +21,20 @@ class GUI:
         self.canvas.pack(padx=10, pady=80)
 
         self.maze = [
-            [0, 0, 0, 0, 0, 2],
-            [0, 1, 1, 1, 0, 0],
-            [0, 0, 0, 1, 0, 0],
-            [1, 1, 0, 1, 0, 0],
-            [1, 1, 0, 1, 0, 0],
-            [1, 1, 0, 1, 0, 0],
-            [1, 1, 0, 0, 0, 0],
-            [0, 0, 0, 1, 1, 0],
-            [0, 1, 0, 0, 0, 0],
-            [0, 1, 1, 0, 0, 0],
-            [0, 0, 0, 0, 1, 0],
-            [3, 0, 0, 0, 0, 0]
+            [1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 1, 1, 2, 1],
+            [1, 0, 0, 0, 1, 0, 0],
+            [1, 1, 1, 0, 1, 0, 0],
+            [3, 0, 0, 0, 1, 0, 0],
+            [1, 1, 1, 1, 1, 0, 0]
         ]
         #starting position of the pointer (row, col)
-        self.pointer_pos = [0, 5]
+        self.pointer_pos = [3, 5]
         self.distance = 0.0
-        self.direction = "down"
-        self.obstacle_detected = False
+        self.direction = "up"
+        self.end_reached = False
         self.obstacle_list = []
         self.draw_maze()
         self.draw_pointer()
@@ -43,16 +42,18 @@ class GUI:
         self.root.bind("<Down>", self.move_backward)
         self.root.bind("<Left>", self.turn_left)
         self.root.bind("<Right>", self.turn_right)
+        
+    def set_end_reached(self):
+        self.end_reached=True
 
-    def obstacle_detection(self):
-        self.obstacle_detected = True
+    def obstacle_detection(self, distance_to_obstacle):
         timestamp = datetime.datetime.now()
-        detected_object = (timestamp, self.pointer_pos, self.direction)
-        print("Object Detected: ", detected_object)
+        detected_object = (timestamp, self.pointer_pos, self.direction, distance_to_obstacle)
+        print(f"Object Detected - Time: {detected_object[0]}, Position: {detected_object[1]}, Direction: {detected_object[2]}, Distance: {detected_object[3]}")
         self.obstacle_list.append(detected_object)
 
     def save_file(self):
-        file = filedialog.asksaveasfile(initialdir=r"C:\Users\jumbo\Desktop\ML_2025\Lab5", defaultextension='.txt',
+        file = filedialog.asksaveasfile(defaultextension='.txt',
                                  filetypes=[("Text file",".txt"), 
                                             ("HTML file", ".html"),
                                             ("All files", ".*")])
@@ -60,7 +61,7 @@ class GUI:
             messagebox.showwarning(title='Notice', message = 'File was not saved.')
             return
         for obstacle in self.obstacle_list:
-            obstacle_line = f"Obstacle detected - Timestamp: {obstacle[0]}, Position: {obstacle[1]}, Direction: {obstacle[2]}\n"
+            obstacle_line = f"Obstacle detected - Timestamp: {obstacle[0]}, Position: {obstacle[1]}, Direction: {obstacle[2]}, Distance to Obstacle: {obstacle[3]}\n"
             file.write(obstacle_line)
         file.close()
 
@@ -95,11 +96,11 @@ class GUI:
             self.canvas.create_line(x, y, x + CELL_SIZE // 4, y,  width=3, arrow="last", tags="pointer")
 
     def update_label(self):
-        self.distance = self.distance+0.5
-        display_distance.set(f"Distance Travelled: {self.distance:.2f}m")
-        root.update_idletasks()
+        self.distance = self.distance+0.355
+        self.display_distance.set(f"Distance Travelled: {self.distance:.2f}m")
+        self.root.update_idletasks()
 
-    def move_forward(self, event=None):
+    def move_forward(self):
         timestamp = datetime.datetime.now()
         row, col = self.pointer_pos
         new_row, new_col = row, col
@@ -129,8 +130,10 @@ class GUI:
             self.draw_pointer()
             print(f"{timestamp} [Event] Moved forward")
             self.update_label()
+            if self.pointer_pos == [6, 0]:
+                set_end_reached()
     
-    def move_backward(self, event=None):
+    def move_backward(self):
         timestamp = datetime.datetime.now()
         row, col = self.pointer_pos
         new_row, new_col = row, col
@@ -161,7 +164,7 @@ class GUI:
             print(f"{timestamp} [Event] Reversed")
             self.update_label()
 
-    def turn_right(self, event=None):
+    def turn_right(self):
         timestamp = datetime.datetime.now()
         current_direction = self.direction
         if current_direction == "up":
@@ -176,7 +179,7 @@ class GUI:
         self.draw_pointer()
         print(f"{timestamp} [Event] Turned right")
 
-    def turn_left(self, event=None):
+    def turn_left(self):
         timestamp = datetime.datetime.now()
         current_direction = self.direction
         if current_direction == "up":
@@ -190,24 +193,3 @@ class GUI:
         
         self.draw_pointer()
         print(f"{timestamp} [Event] Turned left")
-
-root=tk.Tk()
-root.geometry("500x800")
-root.title("Robot Path")
-root.config(background="black")
-
-title = Label(root, 
-              text="Robot Path", font=('Arial', 20, 'bold'), fg='white', bg='black',
-              relief = RAISED, bd=10,
-              padx=10, pady=5)
-title.place(x=160, y=10)
-maze = GUI(root)
-display_distance = tk.StringVar()
-display_distance.set(str(float(0)))
-label = Label(root, textvariable=display_distance, font=('Arial', 16), bg='#000000', fg='#FFFFFF')
-label.pack()
-save_button = Button(root, text='save', command=maze.save_file, font=('Arial', 14), bg='green', fg='white')
-save_button.pack(pady=10)
-obstacle_button = Button(root, text='Obstacle', command=maze.obstacle_detection, font=('Arial', 14), bg='red', fg='white')
-obstacle_button.pack(pady=10, padx=10)
-root.mainloop()

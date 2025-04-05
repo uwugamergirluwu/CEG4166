@@ -1,0 +1,2 @@
+Obstacle detected - Timestamp: 2025-04-01 17:08:45.540746, Position: [1, 5], Direction: up, Distance to Obstacle: 4.56
+Obstacle detected - Timestamp: 2025-04-01 17:08:58.544949, Position: [1, 1], Direction: left, Distance to Obstacle: 11.88
